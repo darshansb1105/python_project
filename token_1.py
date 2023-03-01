@@ -1,2 +1,3 @@
 age=35
-print("Your age is :" + str(age))
+str_age=str(age)
+print("Your age is :" + str_age)

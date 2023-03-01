@@ -1,3 +1,2 @@
-a=10
-b=20
-print(a+b)
+age=35
+print("Your age is :" + str(age))

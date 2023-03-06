@@ -1,2 +1,2 @@
 age=35
-print(f"your name : {age}")
+print(f"your age is {age}")

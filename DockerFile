@@ -2,5 +2,7 @@ FROM python:3.11
 WORKDIR /APP
 COPY HelloWorld.py /APP/
 RUN  pip install flask
+ENV FLASK_ENV development
+ENV FLASK_APP HelloWorld.py
 EXPOSE 5000
-CMD [ "python", "HelloWorld.py" ]
+CMD ["flask", "run", "--host=0.0.0.0"]

@@ -5,6 +5,7 @@ kind: Deployment
 metadata:
   name: python-app
 spec:
+  replicas: 3
   selector:
     matchLabels:
       app: python-app
@@ -13,9 +14,8 @@ spec:
       labels:
         app: python-app
     spec:
-      replicas: 3
       containers:
       - name: python-app
-        image: darshill143/test_repo/:py1
+        image: darshill143/test_repo:py2
         ports:
         - containerPort: 5000

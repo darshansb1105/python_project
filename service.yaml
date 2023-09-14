@@ -9,6 +9,6 @@ spec:
     app: python-app
   ports:
     - protocol: TCP
-      port: 82
+      port: 8085
       targetPort: 5000
   type: LoadBalancer # Change to NodePort or ClusterIP if needed

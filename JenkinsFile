@@ -1,0 +1,79 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'IMAGE_NAME_TAG', defaultValue: 'python-app:latest', description: 'Docker image name and tag')
+    }
+    environment {
+        gitCommitHash = ''
+        imageTag = ''
+        timestamp = ''
+    }
+    stages {
+        agent { 
+            label 'docker'
+        }
+        stage('Checkout') {
+            steps {
+                script {
+                    // Use the SSH key credential for GitHub
+                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
+                              userRemoteConfigs: [[credentialsId: 'jenkins_secret', 
+                                                  url: 'https://github.com/darshansb1105/python_project.git']]])
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                agent { 
+            label 'docker'
+                      }
+                script {
+                    timestamp = sh(script: 'date -u +%Y%m%d%H%M%S', returnStdout: true).trim()
+                    def imageNameTag = params.IMAGE_NAME_TAG
+                    imageTag = "${imageNameTag}:${timestamp}"
+                    // Build the Docker image using PythonDockerBuild file
+                    sh "docker build -t $imageTag -f PythonDockerBuild ."
+                }
+            }
+        }
+        stage('Scan for Vulnerabilities') {
+            steps {
+                // Scan the Docker image for vulnerabilities (replace with your scanning tool)
+                sh "docker scan $imageTag"  // Use double quotes to interpolate variables
+            }
+        }
+        stage('Push to Docker Hub') {
+            steps {
+                // Push the Docker image to Docker Hub
+                withCredentials([string(credentialsId: 'docker-hub-token', variable: 'DOCKER_TOKEN')]) {
+                    script {
+                        def dockerToken = env.DOCKER_TOKEN
+
+                        // Log in to Docker Hub using the token
+                        sh "echo $dockerToken | docker login --username darshill143 --password-stdin"
+
+                        // Tag and push the Docker image
+                        sh "docker tag $imageTag darshill143/test_repo:${gitCommitHash}"
+                        sh "docker push darshill143/test_repo:${gitCommitHash}"  // Corrected image tag
+                    }
+                }
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                // Deploy the image to a Kubernetes cluster using kubectl
+                sh 'kubectl apply -f https://github.com/darshansb1105/python_project/main/deployment.yaml'
+                sh 'kubectl apply -f https://github.com/darshansb1105/python_project/main/service.yaml'
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed!'
+        }
+    }
+}

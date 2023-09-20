@@ -1,48 +1,51 @@
 pipeline {
-    agent any
+           agent {
+               label 'docker'
+                 }
     parameters {
-        string(name: 'IMAGE_NAME_TAG', defaultValue: 'python-app:latest', description: 'Docker image name and tag')
+        string(name: 'IMAGE_NAME_TAG', defaultValue: 'python-app', description: 'Docker image name and tag')
     }
     environment {
-        gitCommitHash = ''
         imageTag = ''
         timestamp = ''
     }
     stages {
-        agent { 
-            label 'docker'
-        }
-        stage('Checkout') {
+       stage('Checkout') {
+
             steps {
-                script {
-                    // Use the SSH key credential for GitHub
-                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
-                              userRemoteConfigs: [[credentialsId: 'jenkins_secret', 
-                                                  url: 'https://github.com/darshansb1105/python_project.git']]])
-                }
-            }
+                deleteDir()
+                sh '''
+                   git init
+                   git clone https://github.com/darshansb1105/python_project.git
+                   cd python_project
+                   chmod -R 777 .
+                   ls -lrt
+                   '''
+                stash name: 'test'
         }
+       }
 
         stage('Build Docker Image') {
-            steps {
-                agent { 
-            label 'docker'
-                      }
+              steps {
                 script {
                     timestamp = sh(script: 'date -u +%Y%m%d%H%M%S', returnStdout: true).trim()
                     def imageNameTag = params.IMAGE_NAME_TAG
                     imageTag = "${imageNameTag}:${timestamp}"
                     // Build the Docker image using PythonDockerBuild file
-                    sh "docker build -t $imageTag -f PythonDockerBuild ."
+                   
+                    unstash 'test'
+                    docker build -t "${imageTag}" -f ./PythonDockerBuild .
+
                 }
             }
         }
+
         stage('Scan for Vulnerabilities') {
-            steps {
-                // Scan the Docker image for vulnerabilities (replace with your scanning tool)
-                sh "docker scan $imageTag"  // Use double quotes to interpolate variables
+            script {
+                sh "docker scout $imageTag"  // Use double quotes to interpolate variables
             }
         }
+
         stage('Push to Docker Hub') {
             steps {
                 // Push the Docker image to Docker Hub
@@ -54,12 +57,13 @@ pipeline {
                         sh "echo $dockerToken | docker login --username darshill143 --password-stdin"
 
                         // Tag and push the Docker image
-                        sh "docker tag $imageTag darshill143/test_repo:${gitCommitHash}"
-                        sh "docker push darshill143/test_repo:${gitCommitHash}"  // Corrected image tag
+                        sh "docker tag $imageTag darshill143/test_repo:${timestamp}"
+                        sh "docker push darshill143/test_repo:${timestamp}"
                     }
                 }
             }
         }
+
         stage('Deploy to Kubernetes') {
             steps {
                 // Deploy the image to a Kubernetes cluster using kubectl

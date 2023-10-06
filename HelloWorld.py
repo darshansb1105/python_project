@@ -10,7 +10,6 @@ def hello_world():
     
     # Get the IP address
     ip_address = socket.gethostbyname(machine_name)
-    
     # HTML response with inline CSS for styling
     response = f"""
     <html>
@@ -43,4 +42,4 @@ def hello_world():
     return response
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True, host= '0.0.0.0', port= 7000)

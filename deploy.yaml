@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: python-app
-        image: darshill143/test_repo
+        image: darshill143/test_repo:kube
         ports:
         - containerPort: 5000

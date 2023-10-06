@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: python-app
-        image: darshill143/test_repo:py2
+        image: darshill143/test_repo:latest
         ports:
         - containerPort: 5000

@@ -7,4 +7,5 @@ RUN apk add --no-cache gcc musl-dev && \
 ENV FLASK_ENV development
 ENV FLASK_APP HelloWorld.py
 EXPOSE 5000
-CMD ["flask", "run", "--host=0.0.0.0"]
+#CMD ["flask", "run", "--host=0.0.0.0"]
+CMD ["python", "/APP/HelloWorld.py"]
